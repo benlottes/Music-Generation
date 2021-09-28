@@ -44,7 +44,8 @@ import os
 import numpy as np
 
 #specify the path
-path="C:/Users/Abir Haque/Desktop/"
+path= os.getcwd() + "\musicFiles"
+print(path)
 
 #read all the filenames
 files=[i for i in os.listdir(path) if i.endswith(".mid")]
