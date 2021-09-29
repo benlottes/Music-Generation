@@ -1,85 +1,25 @@
-#library for understanding music
-from music21 import *
-
-#defining function to read MIDI files
-def read_midi(file):
-    
-    print("Loading Music File:",file)
-    
-    notes=[]
-    notes_to_parse = None
-    
-    #parsing a midi file
-    midi = converter.parse(file)
-  
-    #grouping based on different instruments
-    s2 = instrument.partitionByInstrument(midi)
-
-    #Looping over all the instruments
-    for part in s2.parts:
-    
-        #select elements of only piano
-        if 'Piano' in str(part): 
-        
-            notes_to_parse = part.recurse() 
-      
-            #finding whether a particular element is note or a chord
-            for element in notes_to_parse:
-                
-                #note
-                if isinstance(element, note.Note):
-                    notes.append(str(element.pitch))
-                
-                #chord
-                elif isinstance(element, chord.Chord):
-                    notes.append('.'.join(str(n) for n in element.normalOrder))
-
-    return np.array(notes)
-
-
-#for listing down the file names
-import os
-
-#Array Processing
-import numpy as np
-
-#specify the path
-path="C:/Users/Abir Haque/Desktop/"
-
-#read all the filenames
-files=[i for i in os.listdir(path) if i.endswith(".mid")]
-
-#reading each midi file
-notes_array = np.array([read_midi(path+i) for i in files])
-
-
-#converting 2D array into 1D array
-notes_ = [element for note_ in notes_array for element in note_]
-
-#No. of unique notes
-unique_notes = list(set(notes_))
-print(len(unique_notes))
 
 
 
-from collections import Counter
 
-#computing frequency of each note
-freq = dict(Counter(notes_))
 
-#library for visualiation
-import matplotlib.pyplot as plt
 
-#consider only the frequencies
-no=[count for _,count in freq.items()]
 
-#set the figure size
-plt.figure(figsize=(5,5))
 
-#plot
-plt.hist(no)
 
-plt.savefig('test.png')
+# #library for visualiation
+# import matplotlib.pyplot as plt
+
+# #consider only the frequencies
+# no=[count for _,count in freq.items()]
+
+# #set the figure size
+# plt.figure(figsize=(5,5))
+
+# #plot
+# plt.hist(no)
+
+# plt.savefig('test.png')
 
 
 frequent_notes = [note_ for note_, count in freq.items() if count>=50]
