@@ -1,3 +1,5 @@
+import sys
+import os
 from music21 import *
 import numpy as np
 from keras.models import load_model
@@ -12,8 +14,11 @@ def read_midi(file: str, allow_chords: bool) -> Union[np.ndarray, np.ndarray]:
     durations = []
 
     #parsing a midi file
-    midi = converter.parse(file)
-
+    try:
+        midi = converter.parse(file)
+    except Exception as e:
+        print("Error:", e)
+        return np.array([]), np.array([])
 
     #grouping based on different instruments
     s2 = instrument.partitionByInstrument(midi)
@@ -45,10 +50,6 @@ def read_midi(file: str, allow_chords: bool) -> Union[np.ndarray, np.ndarray]:
 
     print("Parsing Complete")
     return np.array(notes), np.array(durations)
-
-if __name__ == "__main__":
-    notes, durations = read_midi("data/Begin The Beguine.mid")
-
 
 def convert_to_midi(predicted_notes: list, predicted_durations: list, file_path: str = "song.mid") -> None:
     offset = 0
@@ -87,31 +88,30 @@ def convert_to_midi(predicted_notes: list, predicted_durations: list, file_path:
     midi_stream.write('midi', fp=file_path)
 
 
-def produce_song(initial_sequence: np.ndarray, x_int_to_note: dict, x_int_to_dur: dict, \
-                n_notes: int = 10, midi_file_path: str = "song.mid") -> None:
+def produce_song(initial_note_seq: np.ndarray, initial_dur_seq: np.ndarray, x_int_to_note: dict, 
+                x_int_to_dur: dict, n_notes: int = 10, midi_file_path: str = "song.mid") -> None:
     note_model = load_model('models/best_model_note.h5')
     duration_model = load_model('models/best_model_dur.h5')
 
     note_predictions = []
     duration_predictions = []
     for _ in range(n_notes):
-        # make sure correct dimensions
-        #initial_note_sequence = initial_note_sequence.reshape(1, -1)
-
         # create new note prediction
-        note_probs = note_model.predict(initial_sequence.reshape(1,-1,2))[0]
+        note_probs = note_model.predict(initial_note_seq.reshape(1, -1, 1))[0]
         y_pred_note = np.argmax(note_probs, axis=0)
         note_predictions.append(y_pred_note)
 
         # create new duration prediction
-        dur_probs = duration_model.predict(initial_sequence.reshape(1,-1,2))[0]
+        dur_probs = duration_model.predict(initial_dur_seq.reshape(1, -1, 1))[0]
         y_pred_dur = np.argmax(dur_probs, axis=0)
         duration_predictions.append(y_pred_dur)
 
-        # insert new note and duration into sequence (10,) (10,1)
-        initial_sequence = np.append(initial_sequence, np.array([y_pred_note, y_pred_dur]).reshape(1,-1), axis=0)
+        # insert new note and duration into sequence
+        initial_note_seq = np.append(initial_note_seq.reshape(-1, 1), y_pred_note.reshape(-1, 1), axis=0)
+        initial_dur_seq = np.append(initial_dur_seq.reshape(-1, 1), y_pred_dur.reshape(-1, 1), axis=0)
         # cut off the "oldest" note and duration
-        initial_sequence = initial_sequence[1:]
+        initial_note_seq = initial_note_seq[1:]
+        initial_dur_seq = initial_dur_seq[1:]
 
     print(note_predictions)
     print(duration_predictions)
@@ -125,3 +125,9 @@ def produce_song(initial_sequence: np.ndarray, x_int_to_note: dict, x_int_to_dur
     # print(predicted_notes)
 
     convert_to_midi(predicted_notes, predicted_durations, file_path=midi_file_path)
+
+def mute():
+    sys.stdout = open(os.devnull, 'w')
+
+if __name__ == "__main__":
+    notes, durations = read_midi("data/Begin The Beguine.mid")
