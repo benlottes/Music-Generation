@@ -6,12 +6,12 @@ from keras.models import load_model
 from typing import Union
 
 #defining function to read MIDI files
-def read_midi(file: str, allow_chords: bool) -> Union[np.ndarray, np.ndarray]:
+def read_midi(file: str, allow_chords: bool = False) -> Union[np.ndarray, np.ndarray]:
     print("Loading Music File:", file)
     
     notes = []
     notes_to_parse = None
-    durations = []
+    note_objects = []
 
     #parsing a midi file
     try:
@@ -20,12 +20,17 @@ def read_midi(file: str, allow_chords: bool) -> Union[np.ndarray, np.ndarray]:
         print("Error:", e)
         return np.array([]), np.array([])
 
+    #convert to C
+    key = analysis.discrete.KrumhanslSchmuckler().getSolution(midi)
+    interval_to_key = interval.Interval(key.tonic, pitch.Pitch('C'))
+    midi = midi.transpose(interval_to_key)
+
     #grouping based on different instruments
     s2 = instrument.partitionByInstrument(midi)
 
     if s2 == None:
         return np.array([]), np.array([])
-
+    
     #Looping over all the instruments
     for part in s2.parts:
         print("Parsing Instrument:", str(part))
@@ -35,21 +40,25 @@ def read_midi(file: str, allow_chords: bool) -> Union[np.ndarray, np.ndarray]:
 
             #finding whether a particular element is note or a chord
             for element in notes_to_parse:
-                #duration of the note or chord
-                durations.append(element.duration.type)
                 #note
                 if isinstance(element, note.Note):
                     notes.append(str(element.pitch))
+                    note_objects.append(element)
                 #chord
                 elif isinstance(element, chord.Chord):
                     if allow_chords:
                         notes.append('.'.join(str(n) for n in element.normalOrder))
+                        note_objects.append(element)
                     else:
+                        
                         notes.append(str(element.pitches[0]))
+                        note_objects.append(element.notes[0])
+                        #note_objects.append(element.pitches[0])
+                    
                     
 
     print("Parsing Complete")
-    return np.array(notes), np.array(durations)
+    return np.array(note_objects), np.array(notes)
 
 def convert_to_midi(predicted_notes: list, predicted_durations: list, file_path: str = "song.mid") -> None:
     offset = 0
