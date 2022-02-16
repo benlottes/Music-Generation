@@ -102,8 +102,8 @@ def produce_song(initial_note_seq: np.ndarray, initial_dur_seq: np.ndarray, x_in
     note_model = load_model('models/best_model_note.h5')
     duration_model = load_model('models/best_model_dur.h5')
 
-    note_predictions = []
-    duration_predictions = []
+    note_predictions = [note for note in initial_note_seq]
+    duration_predictions = [duration for duration in initial_dur_seq]
     for _ in range(n_notes):
         # create new note prediction
         note_probs = note_model.predict(initial_note_seq.reshape(1, -1, 1))[0]
@@ -122,8 +122,8 @@ def produce_song(initial_note_seq: np.ndarray, initial_dur_seq: np.ndarray, x_in
         initial_note_seq = initial_note_seq[1:]
         initial_dur_seq = initial_dur_seq[1:]
 
-    print(note_predictions)
-    print(duration_predictions)
+    # print(note_predictions)
+    # print(duration_predictions)
 
     predicted_notes = [x_int_to_note[i] for i in note_predictions]
     predicted_durations = [x_int_to_dur[i] for i in duration_predictions]
