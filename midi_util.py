@@ -140,18 +140,19 @@ def produce_note_strings(initial_note_seq: list, int_to_note: dict[int, str], n_
     note_model = load_model('models/best_model_note.h5')
 
     note_predictions = [note for note in initial_note_seq]
+    note_seq_incremental = np.array(initial_note_seq)
     for _ in range(n_notes):
         # create new note prediction
-        note_probs = note_model.predict(initial_note_seq.reshape(1, -1, 1))[0]
+        note_probs = note_model.predict(note_seq_incremental.reshape(1, -1, 1))[0]
         y_pred_note = np.argmax(note_probs, axis=0)
         note_predictions.append(y_pred_note)
 
         # insert new note into sequence
-        initial_note_seq = np.append(initial_note_seq.reshape(-1, 1), y_pred_note.reshape(-1, 1), axis=0)
+        note_seq_incremental = np.append(note_seq_incremental.reshape(-1, 1), y_pred_note.reshape(-1, 1), axis=0)
         # cut off the "oldest" note
-        initial_note_seq = initial_note_seq[1:]
+        note_seq_incremental = note_seq_incremental[1:]
 
-    predicted_notes = [int_to_note[i] for i in note_predictions]
+    predicted_notes = [int_to_note[str(i)] for i in note_predictions]
 
     return predicted_notes
 
