@@ -134,6 +134,7 @@ def produce_song(initial_note_seq: np.ndarray, initial_dur_seq: np.ndarray, x_in
     # print(predicted_notes)
 
     convert_to_midi(predicted_notes, predicted_durations, file_path=midi_file_path)
+    return predicted_notes
 
 def mute():
     sys.stdout = open(os.devnull, 'w')
