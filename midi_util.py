@@ -137,6 +137,7 @@ def produce_song(initial_note_seq: np.ndarray, initial_dur_seq: np.ndarray, x_in
     return predicted_notes
 
 def produce_note_strings(initial_note_seq: list, int_to_note: dict[int, str], n_notes: int = 10) -> list:
+
     note_model = load_model('models/best_model_note.h5')
 
     note_predictions = [note for note in initial_note_seq]
